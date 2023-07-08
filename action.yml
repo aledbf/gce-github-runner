@@ -73,7 +73,13 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - id: check-repository
+      if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+      run: >
+        echo "❌ Job actions are not allowed to run in forks" >> $GITHUB_STEP_SUMMARY
+        exit 1
     - id: gce-github-runner-script
+      if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name
       run: >
         ${{ github.action_path }}/action.sh
         --command=start
