@@ -17,7 +17,6 @@ jobs:
         with:
           token: ${{ secrets.GH_SA_TOKEN }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           image_project: ubuntu-os-cloud
           image_family: ubuntu-2004-lts
           # NOTE: if you do not want external IPs, you must configure your GCE project

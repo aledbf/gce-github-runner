@@ -19,7 +19,6 @@ jobs:
         with:
           token: ${{ secrets.GH_SA_TOKEN }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           image_project: ubuntu-os-cloud
           image_family: ubuntu-2004-lts
 

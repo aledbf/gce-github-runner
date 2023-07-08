@@ -10,26 +10,18 @@ inputs:
     description: >-
       GitHub auth token, needs `repo`/`public_repo` scope: https://docs.github.com/en/rest/reference/actions#self-hosted-runners.
     required: true
-  project_id:
+  project_id: 
     description: >-
       ID of the Google Cloud Platform project. If provided, this will configure gcloud to use this project ID.
     required: false
-  service_account_key:
-    description: >-
-      The service account key which will be used for authentication credentials.
-      This key should be created and stored as a secret. Should be JSON key.
-    required: false
-  runner_ver:
-    description: Version of the GitHub Runner.
-    default: "2.304.0"
-    required: true
+    default: gitpod-core-dev
   machine_zone:
     description: GCE zone
-    default: "us-east1-c"
+    default: "europe-west1-b"
     required: true
   machine_type:
     description: GCE machine type; https://cloud.google.com/compute/docs/machine-types
-    default: "n1-standard-4"
+    default: "n2d-standard-8"
     required: true
   disk_size:
     description: VM disk size.
@@ -39,12 +31,13 @@ inputs:
     required: false
   image_project:
     description: >
-      The Google Cloud project against which all image and image family
-      references will be resolved.
+      The Google Cloud project against which all image and image family references will be resolved.
     required: false
+    default: gitpod-core-dev
   image:
     description: Specifies the name of the image that the disk will be initialized with.
     required: false
+    default: gh-runner-202307101349
   image_family:
     description: The image family for the operating system that the boot disk will be initialized with.
     required: false
@@ -54,7 +47,7 @@ inputs:
     required: true
   ephemeral:
     description: Set GitHub runner to be ephemeral; https://docs.github.com/en/actions/hosting-your-own-runners/autoscaling-with-self-hosted-runners#using-ephemeral-runners-for-autoscaling
-    default: true
+    default: false
     required: true
   scopes:
     description: Scopes granted to the VM, defaults to full access (cloud-platform).
@@ -75,17 +68,18 @@ runs:
   steps:
     - id: check-repository
       if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
-      run: >
+      shell: bash
+      run: |
         echo "❌ Job actions are not allowed to run in forks" >> $GITHUB_STEP_SUMMARY
         exit 1
     - id: gce-github-runner-script
       if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name
+      shell: bash
       run: >
         ${{ github.action_path }}/action.sh
         --command=start
         --token=${{ inputs.token }}
         --project_id=${{ inputs.project_id }}
-        --service_account_key='${{ inputs.service_account_key }}'
         --runner_ver=${{ inputs.runner_ver }}
         --machine_zone=${{ inputs.machine_zone }}
         --machine_type=${{ inputs.machine_type }}
@@ -99,4 +93,3 @@ runs:
         --boot_disk_type=${{ inputs.boot_disk_type }}
         --preemptible=${{ inputs.preemptible }}
         --ephemeral=${{ inputs.ephemeral }}
-      shell: bash
