@@ -56,17 +56,11 @@ while getopts_long :h opt \
   image_project optional_argument \
   image optional_argument \
   image_family optional_argument \
-  network optional_argument \
   scopes required_argument \
   shutdown_timeout required_argument \
-  subnet optional_argument \
   preemptible required_argument \
   ephemeral required_argument \
-  no_external_address required_argument \
-  actions_preinstalled required_argument \
-  arm required_argument \
   maintenance_policy_terminate optional_argument \
-  accelerator optional_argument \
   help no_argument "" "$@"
 do
   case "$opt" in
@@ -181,14 +175,10 @@ function start_vm {
   image_flag=$([[ -z "${image}" ]] || echo "--image=${image}")
   image_family_flag=$([[ -z "${image_family}" ]] || echo "--image-family=${image_family}")
   disk_size_flag=$([[ -z "${disk_size}" ]] || echo "--boot-disk-size=${disk_size}")
-  boot_disk_type_flag=$([[ -z "${boot_disk_type}" ]] || echo "--boot-disk-type=${boot_disk_type}")
+  boot_disk_type_flag=$(echo "--boot-disk-type=pd-ssd")
   preemptible_flag=$([[ "${preemptible}" == "true" ]] && echo "--preemptible" || echo "")
   ephemeral_flag=$([[ "${ephemeral}" == "true" ]] && echo "--ephemeral" || echo "")
-  no_external_address_flag=$([[ "${no_external_address}" == "true" ]] && echo "--no-address" || echo "")
-  network_flag=$([[ ! -z "${network}"  ]] && echo "--network=${network}" || echo "")
-  subnet_flag=$([[ ! -z "${subnet}"  ]] && echo "--subnet=${subnet}" || echo "")
-  accelerator=$([[ ! -z "${accelerator}"  ]] && echo "--accelerator=${accelerator} --maintenance-policy=TERMINATE" || echo "")
-  maintenance_policy_flag=$([[ -z "${maintenance_policy_terminate}"  ]] || echo "--maintenance-policy=TERMINATE" )
+  maintenance_policy_flag=$(echo "--maintenance-policy=TERMINATE")
 
   echo "The new GCE VM will be ${VM_ID}"
 
@@ -231,32 +221,6 @@ function start_vm {
 	nohup sh -c \"sleep 3d && gcloud --quiet compute instances delete ${VM_ID} --zone=${machine_zone}\" > /dev/null &
   "
 
-  if $actions_preinstalled ; then
-    echo "✅ Startup script won't install GitHub Actions (pre-installed)"
-    startup_script="#!/bin/bash
-    cd /actions-runner
-    $startup_script"
-  else
-    echo "✅ Startup script will install GitHub Actions"
-    if $arm ; then
-      startup_script="#!/bin/bash
-      mkdir /actions-runner
-      cd /actions-runner
-      curl -o actions-runner-linux-arm64-${runner_ver}.tar.gz -L https://github.com/actions/runner/releases/download/v${runner_ver}/actions-runner-linux-arm64-${runner_ver}.tar.gz
-      tar xzf ./actions-runner-linux-arm64-${runner_ver}.tar.gz
-      ./bin/installdependencies.sh && \\
-      $startup_script"
-    else
-      startup_script="#!/bin/bash
-      mkdir /actions-runner
-      cd /actions-runner
-      curl -o actions-runner-linux-x64-${runner_ver}.tar.gz -L https://github.com/actions/runner/releases/download/v${runner_ver}/actions-runner-linux-x64-${runner_ver}.tar.gz
-      tar xzf ./actions-runner-linux-x64-${runner_ver}.tar.gz
-      ./bin/installdependencies.sh && \\
-      $startup_script"
-    fi
-  fi
-
   gcloud compute instances create ${VM_ID} \
     --zone=${machine_zone} \
     ${disk_size_flag} \
@@ -268,9 +232,6 @@ function start_vm {
     ${image_flag} \
     ${image_family_flag} \
     ${preemptible_flag} \
-    ${no_external_address_flag} \
-    ${subnet_flag} \
-    ${accelerator} \
     ${maintenance_policy_flag} \
     --labels=gh_ready=0 \
     --metadata=startup-script="$startup_script" \

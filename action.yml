@@ -2,7 +2,6 @@ name: "Ephemeral GCE GitHub self-hosted runner"
 description: >-
   Creates ephemeral GCE based GitHub Action self-hosted runner.
   It uses startup script to bootstrap the VM.
-author: Rafal Wojdyla
 branding:
   icon: triangle
   color: purple
@@ -35,23 +34,6 @@ inputs:
   disk_size:
     description: VM disk size.
     required: false
-  network:
-    description: Specifies the network that the VM instances are a part of.
-    required: false
-  subnet:
-    description: Specifies the subnet that the VM instances are a part of (must be part of network).
-    required: false
-  accelerator:
-    description: >
-      [count=COUNT],[type=TYPE]
-        Attaches accelerators (e.g. GPUs) to the instances.
-        TYPE
-        The specific type (e.g. nvidia-tesla-k80 for nVidia Tesla K80) of accelerator 
-        to attach to the instances. Use 'gcloud compute accelerator-types list' to 
-        learn about all available accelerator types.
-        COUNT
-        Number of accelerators to attach to each instance. The default value is 1.
-    required: false
   runner_service_account:
     description: Service account of the VM, defaults to default compute service account.
     required: false
@@ -68,15 +50,11 @@ inputs:
     required: false
   preemptible:
     description: Use GCE preemptible VM instance; https://cloud.google.com/compute/docs/instances/preemptible
-    default: false
+    default: true
     required: true
   ephemeral:
     description: Set GitHub runner to be ephemeral; https://docs.github.com/en/actions/hosting-your-own-runners/autoscaling-with-self-hosted-runners#using-ephemeral-runners-for-autoscaling
-    default: false
-    required: true
-  no_external_address:
-    description: Disables external IP address for the worker
-    default: false
+    default: true
     required: true
   scopes:
     description: Scopes granted to the VM, defaults to full access (cloud-platform).
@@ -86,19 +64,6 @@ inputs:
     description: "Shutdown grace period (in seconds)."
     default: 30
     required: true
-  actions_preinstalled:
-    description: "Whether the GitHub actions have already been installed at `/actions-runner`."
-    default: false
-    required: true
-  arm:
-    description: "Whether the GitHub actions should use arm64 binaries."
-    default: false
-    required: false
-  maintenance_policy_terminate:
-    description: "Set Google maintenance policy to TERMINATE.  This is required for GPUs as they do ot support live-migration."
-  boot_disk_type:
-    description: "Boot disk type for the GCE instance (https://cloud.google.com/sdk/gcloud/reference/compute/disk-types/list)"
-    required: false
 outputs:
   label:
     description: >-
@@ -118,9 +83,6 @@ runs:
         --runner_ver=${{ inputs.runner_ver }}
         --machine_zone=${{ inputs.machine_zone }}
         --machine_type=${{ inputs.machine_type }}
-        --network=${{ inputs.network }}
-        --subnet=${{ inputs.subnet }}
-        --accelerator=${{ inputs.accelerator }}
         --disk_size=${{ inputs.disk_size }}
         --scopes=${{ inputs.scopes }}
         --shutdown_timeout=${{ inputs.shutdown_timeout }}
@@ -131,8 +93,4 @@ runs:
         --boot_disk_type=${{ inputs.boot_disk_type }}
         --preemptible=${{ inputs.preemptible }}
         --ephemeral=${{ inputs.ephemeral }}
-        --no_external_address=${{ inputs.no_external_address }}
-        --actions_preinstalled=${{ inputs.actions_preinstalled }}
-        --maintenance_policy_terminate=${{ inputs.maintenance_policy_terminate }}
-        --arm=${{ inputs.arm }}
       shell: bash
