@@ -179,9 +179,6 @@ OUT_EOF
 set -e
 set -x
 
-# mark VM as not ready
-gcloud compute instances add-labels "${VM_ID}" --zone="${machine_zone}" --labels=gh_ready=0
-
 pushd /actions-runner || exit 1
 
 REMOVE_TOKEN=\$(curl -s -X POST https://api.github.com/repos/"${GITHUB_REPOSITORY}"/actions/runners/remove-token -H "accept: application/vnd.github.everest-preview+json" -H "authorization: token ${RUNNER_TOKEN}" | jq -r '.token')
